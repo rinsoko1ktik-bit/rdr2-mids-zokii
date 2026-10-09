@@ -1,0 +1,41 @@
+name: Build PS4 PRX
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+      - master
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout project
+        uses: actions/checkout@v4
+
+      - name: Build PRX
+        uses: OpenOrbis/toolchain-action@main
+        with:
+          version: v0.5.1
+          command: |
+            set -eux
+            git clone --depth 1 https://github.com/GoldHEN/GoldHEN_Plugins_SDK.git deps/GoldHEN_Plugins_SDK
+            export GOLDHEN_SDK="$GITHUB_WORKSPACE/deps/GoldHEN_Plugins_SDK"
+            make -C "$GOLDHEN_SDK"
+            make -C plugin_src/zokii_rdr2
+            mkdir -p dist
+            cp plugin_src/zokii_rdr2/build/zokii_rdr2.prx dist/
+
+      - name: Upload PRX
+        uses: actions/upload-artifact@v4
+        with:
+          name: Zokii-RDR2-PRX
+          path: dist/zokii_rdr2.prx
+          if-no-files-found: error
+          retention-days: 14
+          
